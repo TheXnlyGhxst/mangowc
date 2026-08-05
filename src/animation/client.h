@@ -1410,8 +1410,12 @@ bool client_draw_frame(Client *c) {
 	if (!c || !client_surface(c)->mapped)
 		return false;
 
+	/* 实时 overview 预览：喂 frame done + 检测新帧 + 限速重拍快照 */
+	if (c->ov_live_enabled)
+		need_next_tick = overview_live_pass(c) || need_next_tick;
+
 	if (!c->need_output_flush)
-		return client_apply_focus_opacity(c);
+		return client_apply_focus_opacity(c) || need_next_tick;
 
 	if (config.animations && c->animation.running) {
 		need_next_tick = true;
