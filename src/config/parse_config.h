@@ -144,6 +144,9 @@ typedef struct {
 	uint32_t button;
 	void (*func)(const Arg *);
 	Arg arg;
+	char mode[28];
+	bool iscommonmode;
+	bool isdefaultmode;
 } MouseBinding;
 
 typedef struct {
@@ -151,12 +154,18 @@ typedef struct {
 	uint32_t dir;
 	void (*func)(const Arg *);
 	Arg arg;
+	char mode[28];
+	bool iscommonmode;
+	bool isdefaultmode;
 } AxisBinding;
 
 typedef struct {
 	uint32_t fold;
 	void (*func)(const Arg *);
 	Arg arg;
+	char mode[28];
+	bool iscommonmode;
+	bool isdefaultmode;
 } SwitchBinding;
 
 typedef struct {
@@ -165,6 +174,9 @@ typedef struct {
 	uint32_t fingers_count;
 	void (*func)(const Arg *);
 	Arg arg;
+	char mode[28];
+	bool iscommonmode;
+	bool isdefaultmode;
 } GestureBinding;
 
 typedef struct {
@@ -528,6 +540,21 @@ void parse_bind_flags(const char *str, KeyBinding *kb) {
 					suffix[i]);
 			break;
 		}
+	}
+}
+
+static void set_binding_keymode(Config *config, char mode[28],
+								bool *iscommonmode, bool *isdefaultmode) {
+	strcpy(mode, config->keymode);
+	if (strcmp(mode, "common") == 0) {
+		*iscommonmode = true;
+		*isdefaultmode = false;
+	} else if (strcmp(mode, "default") == 0) {
+		*isdefaultmode = true;
+		*iscommonmode = false;
+	} else {
+		*isdefaultmode = false;
+		*iscommonmode = false;
 	}
 }
 
@@ -2724,6 +2751,8 @@ bool parse_option(Config *config, char *key, char *value, int line_number) {
 		MouseBinding *binding =
 			&config->mouse_bindings[config->mouse_bindings_count];
 		memset(binding, 0, sizeof(MouseBinding));
+		set_binding_keymode(config, binding->mode, &binding->iscommonmode,
+							&binding->isdefaultmode);
 
 		char mod_str[256], button_str[256], func_name[256],
 			arg_value[256] = "0\0", arg_value2[256] = "0\0",
@@ -2806,6 +2835,8 @@ bool parse_option(Config *config, char *key, char *value, int line_number) {
 		AxisBinding *binding =
 			&config->axis_bindings[config->axis_bindings_count];
 		memset(binding, 0, sizeof(AxisBinding));
+		set_binding_keymode(config, binding->mode, &binding->iscommonmode,
+							&binding->isdefaultmode);
 
 		char mod_str[256], dir_str[256], func_name[256],
 			arg_value[256] = "0\0", arg_value2[256] = "0\0",
@@ -2881,6 +2912,8 @@ bool parse_option(Config *config, char *key, char *value, int line_number) {
 		SwitchBinding *binding =
 			&config->switch_bindings[config->switch_bindings_count];
 		memset(binding, 0, sizeof(SwitchBinding));
+		set_binding_keymode(config, binding->mode, &binding->iscommonmode,
+							&binding->isdefaultmode);
 
 		char fold_str[256], func_name[256],
 			arg_value[256] = "0\0", arg_value2[256] = "0\0",
@@ -2949,6 +2982,8 @@ bool parse_option(Config *config, char *key, char *value, int line_number) {
 		GestureBinding *binding =
 			&config->gesture_bindings[config->gesture_bindings_count];
 		memset(binding, 0, sizeof(GestureBinding));
+		set_binding_keymode(config, binding->mode, &binding->iscommonmode,
+							&binding->isdefaultmode);
 
 		char mod_str[256], motion_str[256], fingers_count_str[256],
 			func_name[256], arg_value[256] = "0\0", arg_value2[256] = "0\0",
