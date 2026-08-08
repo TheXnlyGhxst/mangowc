@@ -4621,11 +4621,13 @@ void locksession(struct wl_listener *listener, void *data) {
 }
 
 void init_client_properties(Client *c) {
+#ifdef XWAYLAND
 	c->xwl_req_valid = false;
 	c->xwl_req_x = 0;
 	c->xwl_req_y = 0;
 	c->xwl_req_w = 0;
 	c->xwl_req_h = 0;
+#endif
 	c->is_logic_hide = false;
 	c->isgroupfocusing = false;
 	c->group_prev = NULL;
