@@ -295,6 +295,7 @@ struct mango_animation {
 	bool begin_fade_in;
 	bool tag_from_rule;
 	bool overining;
+	bool overview_enter_anim_set;
 	uint32_t time_started;
 	uint32_t duration;
 	struct wlr_box initial;
@@ -594,6 +595,7 @@ struct Monitor {
 	int32_t isoverview;
 	int32_t is_jump_mode;
 	int32_t is_in_hotarea;
+	int32_t ov_normal_mode; /* 热区进入时忽略 ov_tab_mode */
 	int32_t only_sleep;
 	uint32_t visible_clients;
 	uint32_t visible_tiling_clients;
@@ -1621,6 +1623,8 @@ void toggle_hotarea(int32_t x_root, int32_t y_root) {
 
 	if (config.enable_hotarea == 1 && selmon->is_in_hotarea == 0 &&
 		in_hotarea) {
+		/* 热区进入：忽略 ov_tab_mode */
+		selmon->ov_normal_mode = 1;
 		toggleoverview(&arg);
 		selmon->is_in_hotarea = 1;
 	} else if (config.enable_hotarea == 1 && selmon->is_in_hotarea == 1 &&
@@ -3496,6 +3500,7 @@ void createmon(struct wl_listener *listener, void *data) {
 	m->isoverview = 0;
 	m->sel = NULL;
 	m->is_in_hotarea = 0;
+	m->ov_normal_mode = 0;
 	m->m.x = INT32_MAX;
 	m->m.y = INT32_MAX;
 
@@ -4729,6 +4734,7 @@ void init_client_properties(Client *c) {
 	c->animation.tagining = false;
 	c->animation.running = false;
 	c->animation.overining = false;
+	c->animation.overview_enter_anim_set = false;
 	c->animation.tagouting = false;
 	c->animation.tagouted = false;
 	wl_list_init(&c->link);
