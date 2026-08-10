@@ -2798,8 +2798,9 @@ void cleanupmon(struct wl_listener *listener, void *data) {
 	if (m->lock_surface)
 		destroylocksurface(&m->destroy_lock_surface, NULL);
 	m->wlr_output->data = NULL;
-	wlr_output_layout_remove(output_layout, m->wlr_output);
+
 	wlr_scene_output_destroy(m->scene_output);
+	wlr_output_layout_remove(output_layout, m->wlr_output);
 
 	closemon(m);
 
