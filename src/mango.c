@@ -384,7 +384,6 @@ struct Client {
 	struct wl_listener set_hints;
 	struct wl_listener set_geometry;
 	struct wl_listener commmitx11;
-	struct wl_listener scene_commit; /* scene 处理后强制 dest_size */
 	struct wlr_scene_buffer *xwl_root_buffer;
 	float xwayland_scale;	 /* X11 坐标相对逻辑坐标的缩放 */
 	struct wlr_box xwl_clip; /* XWayland 根 surface 最近一次逻辑裁剪区 */
@@ -1186,7 +1185,6 @@ static float xwayland_preferred_scale(Client *c);
 static void xwayland_apply_scale(Client *c);
 static void xwayland_logical_to_x11(struct wlr_box *box, float scale);
 static void xwayland_x11_to_logical(struct wlr_box *box, float scale);
-static void xwayland_scene_commit(struct wl_listener *listener, void *data);
 static void fix_xwayland_coordinate(struct wlr_box *geom);
 static int32_t synckeymap(void *data);
 static void activatex11(struct wl_listener *listener, void *data);
@@ -4775,8 +4773,7 @@ mapnotify(struct wl_listener *listener, void *data) {
 			}
 		}
 		/* scene 处理后强制根 surface 显示逻辑尺寸 */
-		LISTEN(&client_surface(c)->events.commit, &c->scene_commit,
-			   xwayland_scene_commit);
+		LISTEN(&client_surface(c)->events.commit, &c->commmitx11, commitx11);
 	}
 #endif
 
@@ -6927,10 +6924,10 @@ void unmapnotify(struct wl_listener *listener, void *data) {
 
 #ifdef XWAYLAND
 	if (client_is_x11(c)) {
-		if (c->scene_commit.link.prev && c->scene_commit.link.next &&
-			c->scene_commit.link.prev != &c->scene_commit.link) {
-			wl_list_remove(&c->scene_commit.link);
-			wl_list_init(&c->scene_commit.link);
+		if (c->commmitx11.link.prev && c->commmitx11.link.next &&
+			c->commmitx11.link.prev != &c->commmitx11.link) {
+			wl_list_remove(&c->commmitx11.link);
+			wl_list_init(&c->commmitx11.link);
 		}
 	}
 #endif
@@ -7427,12 +7424,6 @@ static void xwayland_x11_to_logical(struct wlr_box *box, float scale) {
 	box->height = (int32_t)roundf(box->height / scale);
 }
 
-/* scene 处理后强制根 surface 铺满窗口矩形 */
-static void xwayland_scene_commit(struct wl_listener *listener, void *data) {
-	Client *c = wl_container_of(listener, c, scene_commit);
-	client_update_xwayland_dest_size(c);
-}
-
 void fix_xwayland_coordinate(struct wlr_box *geom) {
 	if (!selmon)
 		return;
@@ -7550,7 +7541,6 @@ void createnotifyx11(struct wl_listener *listener, void *data) {
 	c = xsurface->data = ecalloc(1, sizeof(*c));
 	c->surface.xwayland = xsurface;
 	c->type = X11;
-	wl_list_init(&c->scene_commit.link);
 	/* Listen to the various events it can emit */
 	LISTEN(&xsurface->events.associate, &c->associate, associatex11);
 	LISTEN(&xsurface->events.destroy, &c->destroy, destroynotify);
@@ -7585,6 +7575,9 @@ void commitx11(struct wl_listener *listener, void *data) {
 		(int32_t)c->surface.xwayland->y == xy) {
 		c->configure_serial = 0;
 	}
+
+	/* scene 处理后强制根 surface 显示逻辑尺寸 */
+	client_update_xwayland_dest_size(c);
 }
 
 void associatex11(struct wl_listener *listener, void *data) {
@@ -7592,14 +7585,12 @@ void associatex11(struct wl_listener *listener, void *data) {
 
 	LISTEN(&client_surface(c)->events.map, &c->map, mapnotify);
 	LISTEN(&client_surface(c)->events.unmap, &c->unmap, unmapnotify);
-	LISTEN(&client_surface(c)->events.commit, &c->commmitx11, commitx11);
 }
 
 void dissociatex11(struct wl_listener *listener, void *data) {
 	Client *c = wl_container_of(listener, c, dissociate);
 	wl_list_remove(&c->map.link);
 	wl_list_remove(&c->unmap.link);
-	wl_list_remove(&c->commmitx11.link);
 	c->xwl_root_buffer = NULL;
 	c->xwl_clip_active = false;
 }
