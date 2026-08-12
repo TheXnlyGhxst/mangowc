@@ -6212,6 +6212,7 @@ void show_hide_client(Client *c) {
 		tag_client(&(Arg){.ui = target}, c);
 	} else {
 		c->tags = c->oldtags;
+		c->isminimized = 0;
 		if (c->mon)
 			arrange(c->mon, false, false);
 	}
