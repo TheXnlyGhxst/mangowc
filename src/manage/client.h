@@ -3629,6 +3629,7 @@ bool client_force_render(Client *c) {
 }
 
 /* 获取当前 XWayland 客户端的 monitor（尚未绑定 monitor 时回退到 selmon） */
+#ifdef XWAYLAND
 static Monitor *xwayland_monitor(Client *c) {
 	Monitor *m = c ? c->mon : NULL;
 	if (!m)
@@ -3895,3 +3896,5 @@ static void setgeometrynotify(struct wl_listener *listener, void *data) {
 	wlr_scene_node_set_position(&c->scene->node, geo.x, geo.y);
 	motionnotify(0, NULL, 0, 0, 0, 0);
 }
+
+#endif
