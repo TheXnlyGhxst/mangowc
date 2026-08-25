@@ -60,8 +60,7 @@
                   libxcb
                   pixman
                   xcb-util-wm
-                  wlroots-0.20
-                  scenefx))
+                  wlroots-0.20))
     (native-inputs (list pkg-config wayland-protocols))
     (home-page "https://github.com/mangowm/mango")
     (synopsis "Wayland compositor based on wlroots and scenefx")
